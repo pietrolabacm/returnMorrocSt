@@ -5,6 +5,8 @@ from matk import *
 
 ##Streamlit##
 
+st.set_page_config(page_title='ReMorroc Calc', page_icon=':crossed_swords:')
+
 def calculate():
     if st.session_state.calculate:
         st.session_state.calculate=False

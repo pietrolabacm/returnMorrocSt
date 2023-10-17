@@ -1,0 +1,240 @@
+import streamlit as st
+from math import floor
+import json
+from matk import *
+
+##Streamlit##
+
+def calculate():
+    if st.session_state.calculate:
+        st.session_state.calculate=False
+    else:
+        st.session_state.calculate = True
+
+def graph():
+    if st.session_state.graph:
+        st.session_state.graph=False
+    else:
+        st.session_state.graph = True
+
+
+def load():
+    if st.session_state.load:
+        st.session_state.load = False
+    else:
+        st.session_state.load = True
+
+def numInputWrapper(stInuputFunction):
+    def wrapper(label, *args, **kwargs):
+        inputWidget = stInuputFunction(label,*args,**kwargs)
+        jsonValues[kwargs['key']] = inputWidget
+        return inputWidget
+    
+    return wrapper
+numInput = numInputWrapper(st.number_input)
+
+
+if 'calculate' not in st.session_state:
+    st.session_state.calculate = False
+if 'graph' not in st.session_state:
+    st.session_state.graph = False
+if 'load' not in st.session_state:
+    st.session_state.load = False
+
+jsonValues = {}
+defaultDict = {
+    'level':1,
+    'astr':1,
+    'aagi':1,
+    'avit':1,
+    'aint':1,
+    'adex':1,
+    'aluk':1,
+    'weapon':0,
+    'flatBonus':0,
+    'race':0,
+    'mproperty':0,
+    'size':0,
+    'matkPerc':0,
+    'elementBonus':0,
+    'elementMulti':100,
+    'skillBonus':0,
+    'skillPerc':100,
+    'skillHits':1,
+    'skillScale':0,
+    'enemyMdef':0,
+    'mdefPierce':0
+    }
+
+st.title('Return to Morroc Calc')
+
+levelCol1,_,_ = st.columns(3)
+with levelCol1:
+    level = st.empty()
+superCol1, superCol2, superCol3 = st.columns(3)
+with superCol1:
+    astr = st.empty()
+    aagi = st.empty()
+    avit = st.empty()
+    weapon = st.empty()
+with superCol2:
+    aint = st.empty()
+    adex = st.empty()
+    aluk = st.empty()
+    flatBonus = st.empty()
+with superCol3:
+    uploadWidget = st.empty()
+    download = st.empty()
+
+st.markdown('Bonus')
+percCol1, percCol2, percCol3 = st.columns(3)
+with percCol1:
+    race = st.empty()
+    matkPerc = st.empty()
+    elementMulti = st.empty()
+with percCol2:
+    mproperty = st.empty()
+    skillBonus = st.empty()
+with percCol3:
+    size = st.empty()
+    elementBonus = st.empty()
+
+
+st.markdown('Combat')
+def1, def2 = st.columns(2)
+with def1:
+    enemyMdef = st.empty()
+with def2:
+    mdefPierce = st.empty()
+
+skill1, skill2 = st.columns(2)
+with skill1:
+    skillPerc = st.empty()
+    skillHits = st.empty()
+with skill2:
+    skillScale = st.expander('Skill scaling',False)
+
+but1, but2 = st.columns(2)
+with but1:
+    calcButton = st.empty()
+    outputDmgHeader = st.empty()
+    outputDmg = st.empty()
+with but2:
+    graphButton = st.empty()
+    selectProp = st.empty()
+    valueSlider = st.empty()
+
+
+calcButton.button('Calculate', on_click=calculate, use_container_width=True)
+graphButton.button('Graphic', on_click=graph, use_container_width=True)
+with selectProp:
+    propList = list(prettyNamesDict.keys())
+    selectProp = st.multiselect('Attributes to vary',propList,
+                                format_func=lambda x : prettyNamesDict[x])
+with valueSlider:
+    valueSlider = st.slider('Value variance',0,40,5)
+
+#Must be checked before the definition of the inputs
+upload = uploadWidget.file_uploader('Load',on_change=load,
+                                    label_visibility='hidden')   
+
+if st.session_state.load and upload is not None:
+    jsonValues = json.loads(upload.getvalue())
+    defaultDict = jsonValues
+    #st.write(jsonValues) 
+
+with level:
+    level = numInput('Level',step=1,key='level',
+            value=defaultDict['level'])
+with astr:
+    astr = numInput('Str',step=1,key='astr',
+            value=defaultDict['astr'])
+with aagi:
+    aagi = numInput('Agi',step=1,key='aagi',
+            value=defaultDict['aagi'])   
+with avit:
+    avit = numInput('Vit',step=1,key='avit',
+            value=defaultDict['avit'])   
+with aint:
+    aint = numInput('Int',step=1,key='aint',
+            value=defaultDict['aint'])    
+with adex:
+    adex = numInput('Dex',step=1,key='adex',
+            value=defaultDict['adex'])
+with aluk:
+    aluk = numInput('Luk',step=1,key='aluk',
+            value=defaultDict['aluk'])
+with weapon:
+    weapon = numInput('Weapon Matk',step=1,key='weapon',
+            value=defaultDict['weapon'])
+with flatBonus:
+    flatBonus = numInput('Flat Matk bonus',step=1,key='flatBonus',
+            value=defaultDict['flatBonus'])
+with race:
+    race = numInput('Race %',step=1,key='race',
+            value=defaultDict['race'])
+with matkPerc:
+    matkPerc = numInput('Matk %',step=1,key='matkPerc',
+            value=defaultDict['matkPerc'])
+with mproperty:
+    mproperty = numInput('Monster element %',step=1,key='mproperty',
+            value=defaultDict['mproperty'])
+with skillBonus:
+    skillBonus = numInput('Skill %',step=1,key='skillBonus',
+            value=defaultDict['skillBonus'])
+with size:
+    size = numInput('Size %',step=1,key='size',
+            value=defaultDict['size'])
+with elementBonus:
+    elementBonus = numInput('Damage with element %',step=1,key='elementBonus',
+            value=defaultDict['elementBonus'])
+with elementMulti:
+    elementMulti = numInput('Elemental modifier %',step=1,key='elementMulti',
+            value=defaultDict['elementMulti'])
+with enemyMdef:
+    enemyMdef = numInput('Enemy Mdef',step=1,key='enemyMdef',
+            value=defaultDict['enemyMdef'])
+with mdefPierce:
+    mdefPierce = numInput('Mdef Pierce %',step=1,key='mdefPierce',
+            value=defaultDict['mdefPierce'])
+with skillPerc:
+    skillPerc = numInput('Skill damage %',step=1,key='skillPerc',
+            value=defaultDict['skillPerc'])
+with skillHits:
+    skillHits = numInput('Number of hits',step=1,key='skillHits',
+            value=defaultDict['skillHits'])
+with skillScale:
+    attList = ['Int','Dex','Luk']
+    attScale = st.selectbox('Attribute',attList)
+    attMultiplier = st.number_input('Multiplier')
+    attName = 'a'+ attScale.lower()
+    skillScaleValue = (jsonValues[attName])*(attMultiplier)
+    st.write(str(skillScaleValue)+' %')
+    
+
+if st.session_state.calculate:
+    matk = Matk(level,aint,adex,aluk,weapon,flatBonus,race,mproperty,size,
+                matkPerc,skillBonus,elementBonus,elementMulti,
+                skillPerc,skillHits,
+                skillScaleValue,enemyMdef,mdefPierce)
+    finalDamage = matk.final()
+
+    outputDmgHeader.text('Final damage:')
+    outputDmg.text('%d'%finalDamage)
+
+if st.session_state.graph:
+    matk = Matk(level,aint,adex,aluk,weapon,flatBonus,race,mproperty,size,
+            matkPerc,skillBonus,elementBonus,elementMulti,
+            skillPerc,skillHits,
+            skillScaleValue,enemyMdef,mdefPierce)
+    df = matk.graphDf(valueSlider,selectProp)
+
+    tab1, tab2 = st.tabs(['Graph','Data'])
+    tab1.line_chart(df)
+    tab2.write(df)
+
+
+
+#must be defined after everything
+download.download_button('Save:floppy_disk:',json.dumps(jsonValues),
+                         'char.json',use_container_width=True)

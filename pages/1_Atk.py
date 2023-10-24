@@ -1,7 +1,8 @@
 import streamlit as st
 from math import floor
+import altair as alt
 import json
-from matk import *
+from roCalc import *
 
 ##Streamlit##
 
@@ -44,31 +45,8 @@ if 'load' not in st.session_state:
     st.session_state.load = False
 
 jsonValues = {}
-defaultDict = {
-    'level':1,
-    'astr':1,
-    'aagi':1,
-    'avit':1,
-    'aint':1,
-    'adex':1,
-    'aluk':1,
-    'weapon':0,
-    'flatBonus':0,
-    'race':0,
-    'mproperty':0,
-    'size':0,
-    'matkPerc':0,
-    'elementBonus':0,
-    'elementMulti':100,
-    'skillBonus':0,
-    'skillPerc':100,
-    'skillHits':1,
-    'skillScale':0,
-    'enemyMdef':0,
-    'mdefPierce':0
-    }
 
-st.title('Return to Morroc Calc')
+st.title('Atk Calculator')
 
 levelCol1,_,_ = st.columns(3)
 with levelCol1:
@@ -79,11 +57,12 @@ with superCol1:
     aagi = st.empty()
     avit = st.empty()
     weapon = st.empty()
+    mastery = st.empty()
 with superCol2:
     aint = st.empty()
     adex = st.empty()
     aluk = st.empty()
-    flatBonus = st.empty()
+    flatBonusAtk = st.empty()
 with superCol3:
     uploadWidget = st.empty()
     download = st.empty()
@@ -92,7 +71,7 @@ st.markdown('Bonus')
 percCol1, percCol2, percCol3 = st.columns(3)
 with percCol1:
     race = st.empty()
-    matkPerc = st.empty()
+    atkPerc = st.empty()
     elementMulti = st.empty()
 with percCol2:
     mproperty = st.empty()
@@ -105,9 +84,9 @@ with percCol3:
 st.markdown('Combat')
 def1, def2 = st.columns(2)
 with def1:
-    enemyMdef = st.empty()
+    enemyDef = st.empty()
 with def2:
-    mdefPierce = st.empty()
+    defPierce = st.empty()
 
 skill1, skill2 = st.columns(2)
 with skill1:
@@ -130,9 +109,9 @@ with but2:
 calcButton.button('Calculate', on_click=calculate, use_container_width=True)
 graphButton.button('Graphic', on_click=graph, use_container_width=True)
 with selectProp:
-    propList = list(prettyNamesDict.keys())
+    propList = list(atk_prettyNamesDict.keys())
     selectProp = st.multiselect('Attributes to vary',propList,
-                                format_func=lambda x : prettyNamesDict[x])
+                                format_func=lambda x : atk_prettyNamesDict[x])
 with valueSlider:
     valueSlider = st.slider('Value variance',0,40,5)
 
@@ -167,17 +146,20 @@ with aluk:
     aluk = numInput('Luk',step=1,key='aluk',
             value=defaultDict['aluk'])
 with weapon:
-    weapon = numInput('Weapon Matk',step=1,key='weapon',
+    weapon = numInput('Weapon Atk',step=1,key='weapon',
             value=defaultDict['weapon'])
-with flatBonus:
-    flatBonus = numInput('Flat Matk bonus',step=1,key='flatBonus',
-            value=defaultDict['flatBonus'])
+with mastery:
+    mastery = numInput('Weapon Mastery',step=1,key='mastery',
+                       value=defaultDict['mastery'])
+with flatBonusAtk:
+    flatBonusAtk = numInput('Flat Atk bonus',step=1,key='flatBonusAtk',
+            value=defaultDict['flatBonusAtk'])
 with race:
     race = numInput('Race %',step=1,key='race',
             value=defaultDict['race'])
-with matkPerc:
-    matkPerc = numInput('Matk %',step=1,key='matkPerc',
-            value=defaultDict['matkPerc'])
+with atkPerc:
+    atkPerc = numInput('Atk %',step=1,key='atkPerc',
+            value=defaultDict['atkPerc'])
 with mproperty:
     mproperty = numInput('Monster element %',step=1,key='mproperty',
             value=defaultDict['mproperty'])
@@ -193,12 +175,12 @@ with elementBonus:
 with elementMulti:
     elementMulti = numInput('Elemental modifier %',step=1,key='elementMulti',
             value=defaultDict['elementMulti'])
-with enemyMdef:
-    enemyMdef = numInput('Enemy Mdef',step=1,key='enemyMdef',
-            value=defaultDict['enemyMdef'])
-with mdefPierce:
-    mdefPierce = numInput('Mdef Pierce %',step=1,key='mdefPierce',
-            value=defaultDict['mdefPierce'])
+with enemyDef:
+    enemyDef = numInput('Enemy Def',step=1,key='enemyDef',
+            value=defaultDict['enemyDef'])
+with defPierce:
+    defPierce = numInput('Def Pierce %',step=1,key='defPierce',
+            value=defaultDict['defPierce'])
 with skillPerc:
     skillPerc = numInput('Skill damage %',step=1,key='skillPerc',
             value=defaultDict['skillPerc'])
@@ -206,33 +188,39 @@ with skillHits:
     skillHits = numInput('Number of hits',step=1,key='skillHits',
             value=defaultDict['skillHits'])
 with skillScale:
-    attList = ['Int','Dex','Luk']
+    attList = ['Str','Agi','Vit','Int','Dex','Luk']
     attScale = st.selectbox('Attribute',attList)
     attMultiplier = st.number_input('Multiplier')
     attName = 'a'+ attScale.lower()
     skillScaleValue = (jsonValues[attName])*(attMultiplier)
-    st.write(str(skillScaleValue)+' %')
+    st.write('{0:.2f} %'.format(skillScaleValue))
     
 
 if st.session_state.calculate:
-    matk = Matk(level,aint,adex,aluk,weapon,flatBonus,race,mproperty,size,
-                matkPerc,skillBonus,elementBonus,elementMulti,
-                skillPerc,skillHits,
-                skillScaleValue,enemyMdef,mdefPierce)
-    finalDamage = matk.final()
+    atk = Atk(level,astr,aagi,avit,aint,adex,aluk,weapon,flatBonusAtk,mastery,
+              race,mproperty,
+              size,atkPerc,skillBonus,elementBonus,elementMulti,skillPerc,
+              skillHits,skillScaleValue,enemyDef,defPierce)
+    finalDamage = atk.final()
 
     outputDmgHeader.text('Final damage:')
     outputDmg.text('%d'%finalDamage)
 
 if st.session_state.graph:
-    matk = Matk(level,aint,adex,aluk,weapon,flatBonus,race,mproperty,size,
-            matkPerc,skillBonus,elementBonus,elementMulti,
+    atk = Atk(level,astr,aagi,avit,aint,adex,aluk,weapon,mastery,
+               flatBonusAtk,race,mproperty,size,
+            atkPerc,skillBonus,elementBonus,elementMulti,
             skillPerc,skillHits,
-            skillScaleValue,enemyMdef,mdefPierce)
-    df = matk.graphDf(valueSlider,selectProp)
+            skillScaleValue,enemyDef,defPierce)
+    df = atk.graphDf(valueSlider,selectProp)
 
     tab1, tab2 = st.tabs(['Graph','Data'])
     tab1.line_chart(df)
+    #chart = alt.Chart(df).mark_line().encode(x=df.columns[0])
+    #for column in df.columns[1:]:
+    #    chart.encode(y=column)
+    #chart.encoding.y.scale = alt.Scale(domain=[min(df),max(df)])
+    #tab1.altair_chart(chart)
     tab2.write(df)
 
 

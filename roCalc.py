@@ -34,7 +34,7 @@ atk_prettyNamesDict = {'str':'Str',
                         'skillBonus':'Skill %',
                         'size':'Size %',
                         'elementBonus':'Damage with element %',
-                        'mdefPierce':'Def Pierce %'
+                        'defPierce':'Def Pierce %'
                         }
 
 defaultDict = {
